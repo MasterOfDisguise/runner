@@ -15,4 +15,4 @@ while running:
         if event.type == pygame.KEYDOWN:
             game.runner.key_event(event)
     pygame.display.flip()
-    clock.tick(100)
+    clock.tick(120)

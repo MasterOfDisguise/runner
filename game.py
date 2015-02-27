@@ -1,9 +1,9 @@
 __author__ = 'Administrator'
 from config import *
-from classes import GameScreen
+from classes import Game
 
 clock = pygame.time.Clock()
-game = GameScreen(screen)
+game = Game(screen)
 pygame.mixer.music.play(-1)
 while running:
     screen.fill(black)
@@ -12,7 +12,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = 0
-        if event.type == pygame.KEYDOWN:
-            game.runner.key_event(event)
+        if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+            game.handle_events(event)
     pygame.display.flip()
     clock.tick(100)

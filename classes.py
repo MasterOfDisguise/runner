@@ -4,14 +4,14 @@ from config import *
 
 class Runner(pygame.sprite.Sprite):
 
-    def __init__(self, manager):
-        self.manager = manager
+    def __init__(self, screen):
+        self.screen = screen
         pygame.sprite.Sprite.__init__(self)
         self.image = image1
         self.rect = self.image.get_rect()
         self.rect.x = width/2
         self.rect.y = height - 84
-        self.surface = self.manager.surface
+        self.surface = self.screen.surface
         self.velocity = 5
         self.gravity = 1
         self.jump_height = -20
@@ -34,7 +34,7 @@ class Runner(pygame.sprite.Sprite):
         if self.state == 'standing':
             self.velocity = 0
             self.can_jump = True
-        if not pygame.sprite.spritecollideany(self, self.manager.formation.ground) or self.state == 'jumping' or self.state == 'falling':
+        if not pygame.sprite.spritecollideany(self, self.screen.formation.ground) or self.state == 'jumping' or self.state == 'falling':
             self.velocity += self.gravity
             if self.velocity > 0:
                 self.state = 'falling'
@@ -78,8 +78,8 @@ class Runner(pygame.sprite.Sprite):
 
 class Spikes(pygame.sprite.Sprite):
 
-    def __init__(self, manager, x, y):
-        self.manager = manager
+    def __init__(self, screen, x, y):
+        self.screen = screen
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("spikes.PNG").convert_alpha()
         self.image = pygame.transform.scale(self.image, (int(35), int(45)))
@@ -88,7 +88,7 @@ class Spikes(pygame.sprite.Sprite):
         self.rect.y = y
 
     def move(self):
-        self.rect.x += self.manager.speed
+        self.rect.x += self.screen.speed
 
     def update(self):
         self.move()
@@ -98,9 +98,9 @@ class Spikes(pygame.sprite.Sprite):
 
 class Coin(pygame.sprite.Sprite):
 
-    def __init__(self, manager, x, y):
+    def __init__(self, screen, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.manager = manager
+        self.screen = screen
         self.image = pygame.image.load("coin.PNG").convert_alpha()
         self.image = pygame.transform.scale(self.image, (int(35), int(35)))
         self.rect = self.image.get_rect()
@@ -108,7 +108,7 @@ class Coin(pygame.sprite.Sprite):
         self.rect.y = y
 
     def move(self):
-        self.rect.x += self.manager.speed
+        self.rect.x += self.screen.speed
 
     def update(self):
         self.move()
@@ -118,8 +118,8 @@ class Coin(pygame.sprite.Sprite):
 
 class Ground(pygame.sprite.Sprite):
 
-    def __init__(self, manager, x, y):
-        self.manager = manager
+    def __init__(self, screen, x, y):
+        self.screen = screen
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("ground.PNG").convert()
         self.rect = self.image.get_rect()
@@ -127,15 +127,15 @@ class Ground(pygame.sprite.Sprite):
         self.rect.y = y
 
     def move(self):
-        self.rect.x += self.manager.speed
+        self.rect.x += self.screen.speed
 
     def update(self):
         self.move()
         if self.rect.right <= 0:
             if self.rect.bottom == height:
                 self.kill()
-                block = Ground(self.manager, width, height-35)
-                self.manager.formation.ground.add(block)
+                block = Ground(self.screen, width, height-35)
+                self.screen.formation.ground.add(block)
 
             else:
                 self.kill()
@@ -143,9 +143,9 @@ class Ground(pygame.sprite.Sprite):
 
 class PowerUp(pygame.sprite.Sprite):
 
-    def __init__(self, manager, type):
+    def __init__(self, screen, type):
         pygame.sprite.Sprite.__init__(self)
-        self.manager = manager
+        self.screen = screen
         self.type = type
         if self.type == 1:
             self.image = pygame.image.load("invincibility.png").convert_alpha()
@@ -156,7 +156,7 @@ class PowerUp(pygame.sprite.Sprite):
         self.rect.y = random.randint(0, height-100)
 
     def move(self):
-        self.rect.x += self.manager.speed
+        self.rect.x += self.screen.speed
 
     def update(self):
         self.move()
@@ -166,9 +166,9 @@ class PowerUp(pygame.sprite.Sprite):
 
 class Background(pygame.sprite.Sprite):
 
-    def __init__(self, manager, x):
+    def __init__(self, screen, x):
         pygame.sprite.Sprite.__init__(self)
-        self.manager = manager
+        self.screen = screen
         self.image = pygame.image.load("background.PNG").convert()
         self.image = pygame.transform.scale(self.image, (int(width), int(height)))
         self.rect = self.image.get_rect()
@@ -176,95 +176,100 @@ class Background(pygame.sprite.Sprite):
         self.rect.y = 0
 
     def move(self):
-        self.rect.x += self.manager.speed
+        self.rect.x += self.screen.speed
 
     def update(self):
         self.move()
         if self.rect.right <= 0:
             self.kill()
-            wall = Background(self.manager, width)
-            self.manager.background.add(wall)
+            wall = Background(self.screen, width)
+            self.screen.background.add(wall)
 
 
 class Formation():
 
-    def __init__(self, manager):
-        self.manager = manager
+    def __init__(self, screen):
+        self.screen = screen
         self.x = width
         self.coins = pygame.sprite.Group()
         self.spikes = pygame.sprite.Group()
         self.ground = pygame.sprite.Group()
         self.power_ups = pygame.sprite.Group()
         self.counter = 0
+        self.length = 1000
 
     def choose_formation(self):
         formation = random.randint(1, 4)
         if formation == 1:
+            self.length = 900
             a = 0
-            for i in range(0, 900, 35):
-                spike = Spikes(self.manager, self.x+i, height-80)
+            for i in range(0, self.length, 35):
+                spike = Spikes(self.screen, self.x+i, height-80)
                 self.spikes.add(spike)
             for i in range(0, 175, 35):
-                platform = Ground(self.manager, self.x+i, 400)
+                platform = Ground(self.screen, self.x+i, 400)
                 self.ground.add(platform)
             for i in range(245, 420, 35):
-                platform = Ground(self.manager, self.x+i, 200)
+                platform = Ground(self.screen, self.x+i, 200)
                 self.ground.add(platform)
             for i in range(595, 770, 35):
-                platform = Ground(self.manager, self.x+i, 450)
+                platform = Ground(self.screen, self.x+i, 450)
                 self.ground.add(platform)
             for i in range(35, 450, 35):
-                coin = Coin(self.manager, self.x+630+a, i)
+                coin = Coin(self.screen, self.x+630+a, i)
                 self.coins.add(coin)
                 a += 5
         if formation == 2:
+            self.length = 900
             for i in range(0, 900, 35):
-                spike = Spikes(self.manager, self.x+i, height-80)
+                spike = Spikes(self.screen, self.x+i, height-80)
                 self.spikes.add(spike)
             for i in range(0, 175, 35):
-                platform = Ground(self.manager, self.x+i, 400)
+                platform = Ground(self.screen, self.x+i, 400)
                 self.ground.add(platform)
             for i in range(350, 525, 35):
-                platform = Ground(self.manager, self.x+i, 400)
+                platform = Ground(self.screen, self.x+i, 400)
                 self.ground.add(platform)
             for i in range(700, 875, 35):
-                platform = Ground(self.manager, self.x+i, 400)
+                platform = Ground(self.screen, self.x+i, 400)
                 self.ground.add(platform)
             for i in range(140, 385, 35):
-                coin = Coin(self.manager, self.x+i, 200)
-                coin2 = Coin(self.manager, self.x+350+i, 200)
+                coin = Coin(self.screen, self.x+i, 200)
+                coin2 = Coin(self.screen, self.x+350+i, 200)
                 self.coins.add(coin)
                 self.coins.add(coin2)
         if formation == 3:
+            self.length = 875
             for i in range(0, 210, 35):
-                spike = Spikes(self.manager, self.x+i, height-80)
+                spike = Spikes(self.screen, self.x+i, height-80)
                 self.spikes.add(spike)
-                spike2 = Spikes(self.manager, self.x+i+350, 355)
+                spike2 = Spikes(self.screen, self.x+i+350, 355)
                 self.spikes.add(spike2)
-                spike3 = Spikes(self.manager, self.x+i+665, height-80)
+                spike3 = Spikes(self.screen, self.x+i+665, height-80)
                 self.spikes.add(spike3)
             for i in range(0, 210, 35):
-                platform = Ground(self.manager, self.x+i, 400)
-                platform2 = Ground(self.manager, self.x+i+350, 400)
-                platform3 = Ground(self.manager, self.x+i+665, 400)
+                platform = Ground(self.screen, self.x+i, 400)
+                platform2 = Ground(self.screen, self.x+i+350, 400)
+                platform3 = Ground(self.screen, self.x+i+665, 400)
                 self.ground.add(platform)
                 self.ground.add(platform2)
                 self.ground.add(platform3)
         if formation == 4:
-            for i in range(0, 900, 35):
-                platform = Ground(self.manager, self.x+i, 400)
+            self.length = 900
+            for i in range(0, self.length, 35):
+                platform = Ground(self.screen, self.x+i, 400)
                 self.ground.add(platform)
             for i in range(0, 105, 35):
-                spike2 = Spikes(self.manager, self.x+i+175, 355)
-                coin = Coin(self.manager, self.x+i+175, 150)
+                spike2 = Spikes(self.screen, self.x+i+175, 355)
+                coin = Coin(self.screen, self.x+i+175, 150)
                 self.spikes.add(spike2)
                 self.coins.add(coin)
-                spike3 = Spikes(self.manager, self.x+i+525, 355)
-                coin2 = Coin(self.manager, self.x+i+525, 150)
+                spike3 = Spikes(self.screen, self.x+i+525, 355)
+                coin2 = Coin(self.screen, self.x+i+525, 150)
                 self.coins.add(coin2)
                 self.spikes.add(spike3)
-                spike = Spikes(self.manager, self.x+i+795, 355)
-                coin3 = Coin(self.manager, self.x+i+795, 150)
+                spike = Spikes(self.screen, self.x+i+795, 355)
+                coin3 = Coin(self.screen, self.x+i+795, 150)
                 self.spikes.add(spike)
                 self.coins.add(coin3)
 
@@ -275,36 +280,62 @@ class Formation():
         self.ground.draw(surface)
 
     def update(self):
-        self.counter += 1
+        self.counter += 5
         self.coins.update()
         self.spikes.update()
         self.ground.update()
         self.power_ups.update()
-        if self.counter == 180:
+        if self.counter == self.length:
             self.counter = 0
             self.choose_formation()
         a = random.randint(0, 5000)
-        if a >= 4990:
-            power_up = PowerUp(self.manager, random.randint(1, 2))
+        if a >= 4996:
+            power_up = PowerUp(self.screen, random.randint(1, 2))
             self.power_ups.add(power_up)
-        if self.manager.runner.power_up == "coin heaven":
-            if self.counter % 10 == 0:
-                coin = Coin(self.manager, width, random.randint(0, height-100))
+        if self.screen.runner.power_up == "coin heaven":
+            if self.counter % 25 == 0:
+                coin = Coin(self.screen, width, random.randint(0, height-100))
                 self.coins.add(coin)
+
+
+class StartScreen():
+
+    def __init__(self, manager):
+        self.manager = manager
+        self.surface = self.manager.surface
+        self.title = eztext.Input(maxlength=45, color=white, prompt="RUN")
+        self.title.set_pos(width/2, 0)
+        self.run = eztext.Input(maxlength=45, color=white, prompt="GO!")
+        self.run.set_pos(width/2, 300)
+
+    def handle_events(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = pygame.mouse.get_pos()
+            if x >= 400 and x <= 440 and y >= 300 and y <= 320:
+                self.manager.screen = GameScreen(self.manager)
+
+    def draw(self):
+        self.title.draw(self.surface)
+        self.run.draw(self.surface)
+
+    def update(self):
+        pass
+
 
 
 class GameScreen():
 
-    def __init__(self, surface):
+    def __init__(self, manager):
+        self.manager = manager
         self.speed = -5
-        self.surface = surface
+        self.surface = self.manager.surface
         self.runner = Runner(self)
         self.formation = Formation(self)
         self.background = pygame.sprite.Group()
         self.start_ground()
         self.score = 0
-        self.scoreboard = eztext.Input(maxlength=45, color=white, prompt='score:'+str(self.score))
-        self.power_up_type = eztext.Input(maxlength=45, color=white, prompt='power up:'+self.runner.power_up)
+        self.scoreboard = eztext.Input(maxlength=45, color=white, prompt='distance:'+str(self.score))
+        self.power_up_type = eztext.Input(maxlength=45, color=white, prompt='power up: '+self.runner.power_up)
         self.power_up_type.set_pos(200, 0)
 
     def start_ground(self):
@@ -315,6 +346,9 @@ class GameScreen():
         wall2 = Background(self, width)
         self.background.add(wall)
         self.background.add(wall2)
+
+    def handle_events(self, event):
+        self.runner.key_event(event)
 
     def draw(self):
         self.background.draw(self.surface)
@@ -362,6 +396,22 @@ class GameScreen():
         self.background.update()
         self.check_colliding()
         self.score += 1
-        self.power_up_type = eztext.Input(maxlength=45, color=white, prompt='power up:'+self.runner.power_up)
-        self.scoreboard = eztext.Input(maxlength=45, color=white, prompt='score:'+str(self.score))
+        self.power_up_type = eztext.Input(maxlength=45, color=white, prompt='power up: '+self.runner.power_up)
+        self.scoreboard = eztext.Input(maxlength=45, color=white, prompt='distance: '+str(self.score))
         self.power_up_type.set_pos(200, 0)
+
+
+class Game():
+
+    def __init__(self, surface):
+        self.surface = surface
+        self.screen = StartScreen(self)
+
+    def draw(self):
+        self.screen.draw()
+
+    def handle_events(self, event):
+        self.screen.handle_events(event)
+
+    def update(self):
+        self.screen.update()
